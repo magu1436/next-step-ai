@@ -1,4 +1,4 @@
-import type { AgentProgressStep, JobHuntAdviceState } from "./agent";
+import type { AgentProgressStep, FollowUpQuestion, JobHuntAdviceState } from "./agent";
 
 export interface AdviceStreamInitialRequest {
   initialConcern: string;
@@ -7,13 +7,6 @@ export interface AdviceStreamInitialRequest {
 export interface AdviceStreamFollowUpRequest {
   state: JobHuntAdviceState;
   additionalInfo?: string;
-}
-
-export interface FollowUpQuestion {
-  fieldKey: string;
-  question: string;
-  reason: string;
-  importance: "high" | "medium" | "low";
 }
 
 export type AgentStreamEvent =
