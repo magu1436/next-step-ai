@@ -21,6 +21,7 @@
 | 1.0.0 | 練習用アプリとして仕様を確定。OpenAI API固定に変更。ストリーミングAPIを主APIとして整理。LangGraph設計をMermaid形式に変更                    |
 | 1.1.0 | アプリ名称を「ネクストステップAI」に決定。ドキュメント情報、アプリ概要、画面仕様上の表示名に反映                                               |
 | 1.2.0 | GitHub及びワイヤーフレームへのリンクを追記                                                                        |
+| 1.3.0 | 画面コンポーネント構成に分類結果カードを追加し、分類完了後の表示責務を明確化                                                     |
 
 ## 2. アプリ概要
 
@@ -608,6 +609,7 @@ app/page.tsx
   ├─ ConcernInput
   ├─ ConcernSummaryCard
   ├─ AgentProgressTimeline
+  ├─ ClassificationResultCard
   ├─ FollowUpQuestionPanel
   ├─ ResultPanel
   └─ ErrorPanel
@@ -618,6 +620,7 @@ app/page.tsx
 | ConcernInput | 初期相談の入力 | `AppPhase === "idle"` |
 | ConcernSummaryCard | 送信済み相談内容の表示 | `AppPhase !== "idle"` |
 | AgentProgressTimeline | エージェント処理状況の表示 | `AppPhase !== "idle"` |
+| ClassificationResultCard | 分類カテゴリ、分類理由、信頼度の表示 | `classificationResult` または `category` が存在する場合 |
 | FollowUpQuestionPanel | 追加質問と回答欄の表示 | `AppPhase === "waiting_for_user"` |
 | ResultPanel | 状況整理、解決方針、実行アクションの表示 | `strategy` または `actions` が存在する場合 |
 | ErrorPanel | エラー表示、再試行導線 | `AppPhase === "error"` |
@@ -1196,5 +1199,5 @@ MVP完了の条件は以下とする。
 これにより、単なる汎用チャットではなく、就活相談に特化したAIエージェントとしての構造を持たせる。
 
 # 18. リンク
-- [GitHubリポジトリ](git@github.com:magu1436/next-step-ai.git)
+- [GitHubリポジトリ](https://github.com/magu1436/next-step-ai.git)
 - [ワイヤーフレーム](https://www.figma.com/design/clI69XAjaOm6oCDTyHLriK/%E3%83%8D%E3%82%AF%E3%82%B9%E3%83%88%E3%82%B9%E3%83%86%E3%83%83%E3%83%97AI?t=4oc4LMkm0Zyg72aH-1)
