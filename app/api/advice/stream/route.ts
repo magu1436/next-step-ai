@@ -113,14 +113,15 @@ export async function POST(request: Request): Promise<Response> {
             return;
           }
         } else {
-          const { state, additionalInfo } = body as AdviceStreamFollowUpRequest;
+          const { state: originalState, additionalInfo } =
+            body as AdviceStreamFollowUpRequest;
           send({
             type: "step_started",
             stepId: "merge_additional_info",
             label: "追加情報を統合",
           });
 
-          let nextState = mergeAdditionalInfo({ state, additionalInfo });
+          state = mergeAdditionalInfo({ state: originalState, additionalInfo });
 
           send({
             type: "step_completed",
@@ -134,10 +135,10 @@ export async function POST(request: Request): Promise<Response> {
             label: "状況を再整理",
           });
 
-          const refinedContext = await refineContext({ state: nextState });
+          const refinedContext = await refineContext({ state });
 
-          nextState = {
-            ...nextState,
+          state = {
+            ...state,
             refinedContext,
           };
 
@@ -153,59 +154,59 @@ export async function POST(request: Request): Promise<Response> {
             field: "refinedContext",
             data: refinedContext,
           });
-
-          send({
-            type: "step_started",
-            stepId: "generate_strategy",
-            label: "解決方針を生成",
-          });
-
-          const strategy = await generateStrategy({ state: nextState });
-
-          nextState = {
-            ...nextState,
-            strategy,
-          };
-
-          send({
-            type: "step_completed",
-            stepId: "generate_strategy",
-            summary: "解決方針を生成しました。",
-            data: strategy,
-          });
-
-          send({
-            type: "partial_result",
-            field: "strategy",
-            data: strategy,
-          });
-
-          send({
-            type: "step_started",
-            stepId: "generate_actions",
-            label: "実行アクションを生成",
-          });
-
-          const actions = await generateActions({ state: nextState });
-
-          nextState = {
-            ...nextState,
-            actions,
-          };
-
-          send({
-            type: "step_completed",
-            stepId: "generate_actions",
-            summary: "実行アクションを生成しました。",
-            data: actions,
-          });
-
-          send({
-            type: "partial_result",
-            field: "actions",
-            data: actions,
-          });
         }
+
+        send({
+          type: "step_started",
+          stepId: "generate_strategy",
+          label: "解決方針を生成",
+        });
+
+        const strategy = await generateStrategy({ state });
+
+        state = {
+          ...state,
+          strategy,
+        };
+
+        send({
+          type: "step_completed",
+          stepId: "generate_strategy",
+          summary: "解決方針を生成しました。",
+          data: strategy,
+        });
+
+        send({
+          type: "partial_result",
+          field: "strategy",
+          data: strategy,
+        });
+
+        send({
+          type: "step_started",
+          stepId: "generate_actions",
+          label: "実行アクションを生成",
+        });
+
+        const actions = await generateActions({ state });
+
+        state = {
+          ...state,
+          actions,
+        };
+
+        send({
+          type: "step_completed",
+          stepId: "generate_actions",
+          summary: "実行アクションを生成しました。",
+          data: actions,
+        });
+
+        send({
+          type: "partial_result",
+          field: "actions",
+          data: actions,
+        });
 
         send({
           type: "completed",
