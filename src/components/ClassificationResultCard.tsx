@@ -1,12 +1,10 @@
+"use client";
+
 import CategoryRoundedIcon from "@mui/icons-material/CategoryRounded";
 import { Box, Card, Chip, Stack, Typography } from "@mui/material";
 
-import type { ClassificationResult } from "../types/agent";
+import { useClassificationResult } from "../hooks/context";
 import type { ConcernCategory } from "../types/advice";
-
-type ClassificationResultCardProps = {
-  result: ClassificationResult;
-};
 
 const categoryLabelMap: Record<ConcernCategory, string> = {
   self_analysis: "自己分析",
@@ -23,9 +21,13 @@ const formatConfidence = (confidence: number) => {
   return confidence.toFixed(2);
 };
 
-const ClassificationResultCard = ({
-  result,
-}: ClassificationResultCardProps) => {
+const ClassificationResultCard = () => {
+  const { classificationResult: result } = useClassificationResult();
+
+  if (!result) {
+    return null;
+  }
+
   const categoryLabel = categoryLabelMap[result.category];
 
   return (

@@ -1,13 +1,12 @@
+"use client";
+
 import AssignmentTurnedInRoundedIcon from "@mui/icons-material/AssignmentTurnedInRounded";
 import FlagRoundedIcon from "@mui/icons-material/FlagRounded";
 import LightbulbRoundedIcon from "@mui/icons-material/LightbulbRounded";
 import { Box, Card, Chip, Stack, Typography } from "@mui/material";
 
-import type { Action, JobHuntAdviceState } from "../types/agent";
-
-type ResultPanelProps = {
-  result: Pick<JobHuntAdviceState, "refinedContext" | "strategy" | "actions">;
-};
+import { useResult } from "../hooks/context";
+import type { Action } from "../types/agent";
 
 const priorityLabelMap: Record<Action["priority"], string> = {
   high: "高",
@@ -140,9 +139,17 @@ const ActionCard = ({ action, index }: { action: Action; index: number }) => {
   );
 };
 
-const ResultPanel = ({ result }: ResultPanelProps) => {
+const ResultPanel = () => {
+  const { result } = useResult();
+
+  if (!result) {
+    return null;
+  }
+
   const hasActions = Boolean(result.actions?.length);
-  const hasResult = Boolean(result.refinedContext || result.strategy || hasActions);
+  const hasResult = Boolean(
+    result.refinedContext || result.strategy || hasActions,
+  );
 
   if (!hasResult) {
     return null;

@@ -2,18 +2,18 @@
 
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
 import { Button, Card, Stack, Typography } from "@mui/material";
+import { useInitialConcern } from "../hooks/context";
 
 type ConcernSummaryCardProps = {
-  initialConcern: string;
   onReset?: () => void;
   isResetDisabled?: boolean;
 };
 
 const ConcernSummaryCard = ({
-  initialConcern,
   onReset,
   isResetDisabled = false,
 }: ConcernSummaryCardProps) => {
+  const { initialConcern } = useInitialConcern();
   return (
     <Card
       component="section"

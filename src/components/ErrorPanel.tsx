@@ -4,17 +4,20 @@ import ErrorRoundedIcon from "@mui/icons-material/ErrorRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import { Box, Button, Card, Stack, Typography } from "@mui/material";
 
+import { useErrorEessage } from "../hooks/context";
+
 type ErrorPanelProps = {
-  message: string;
   onRetry: () => void | Promise<void>;
   isRetrying?: boolean;
 };
 
-const ErrorPanel = ({
-  message,
-  onRetry,
-  isRetrying = false,
-}: ErrorPanelProps) => {
+const ErrorPanel = ({ onRetry, isRetrying = false }: ErrorPanelProps) => {
+  const { errorEessage: message } = useErrorEessage();
+
+  if (!message) {
+    return null;
+  }
+
   return (
     <Card
       component="section"

@@ -1,3 +1,5 @@
+"use client";
+
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import ErrorRoundedIcon from "@mui/icons-material/ErrorRounded";
 import PauseCircleFilledRoundedIcon from "@mui/icons-material/PauseCircleFilledRounded";
@@ -6,11 +8,8 @@ import RadioButtonUncheckedRoundedIcon from "@mui/icons-material/RadioButtonUnch
 import RemoveCircleOutlineRoundedIcon from "@mui/icons-material/RemoveCircleOutlineRounded";
 import { Box, Card, Chip, Stack, Typography } from "@mui/material";
 
-import type { AgentProgressStep, AgentStepStatus } from "../types/agent";
-
-type AgentProgressTimelineProps = {
-  steps: AgentProgressStep[];
-};
+import { useSteps } from "../hooks/context";
+import type { AgentStepStatus } from "../types/agent";
 
 type StatusView = {
   label: string;
@@ -51,7 +50,9 @@ const statusViewMap: Record<AgentStepStatus, StatusView> = {
   },
 };
 
-const AgentProgressTimeline = ({ steps }: AgentProgressTimelineProps) => {
+const AgentProgressTimeline = () => {
+  const { steps } = useSteps();
+
   return (
     <Card
       component="section"

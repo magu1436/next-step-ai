@@ -4,20 +4,19 @@ import SendRoundedIcon from "@mui/icons-material/SendRounded";
 import { Box, Button, Card, Stack, TextField, Typography } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import type { FollowUpQuestion } from "../types/agent";
+import { useQuestions } from "../hooks/context";
 import QuestionCard from "./QuestionCard";
 
 type FollowUpQuestionPanelProps = {
-  questions: FollowUpQuestion[];
   onSubmit?: (additionalInfo: string) => void | Promise<void>;
   isSubmitting?: boolean;
 };
 
 export default function FollowUpQuestionPanel({
-  questions,
   onSubmit,
   isSubmitting = false,
 }: FollowUpQuestionPanelProps) {
+  const { questions = [] } = useQuestions();
   const formRef = useRef<HTMLFormElement>(null);
   const [additionalInfo, setAdditionalInfo] = useState("");
 

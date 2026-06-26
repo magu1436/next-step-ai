@@ -1,33 +1,22 @@
 "use client";
 
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
-import {
-  Box,
-  Button,
-  Card,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Card, Stack, TextField, Typography } from "@mui/material";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useInitialConcern } from "../hooks/context";
 
 const MIN_CONCERN_LENGTH = 10;
 
-type ConcernInputProps = {
-  onSubmit?: (initialConcern: string) => void | Promise<void>;
-  isSubmitting?: boolean;
-};
-
-const ConcernInput = ({
-  onSubmit,
-  isSubmitting = false,
-}: ConcernInputProps) => {
+const ConcernInput = () => {
   const formRef = useRef<HTMLFormElement>(null);
-  const [concern, setConcern] = useState("");
+  const { initialConcern, setInitialConcern } = useInitialConcern();
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
-  const trimmedConcern = useMemo(() => concern.trim(), [concern]);
-  const isEmpty = trimmedConcern.length === 0;
+  const trimmedConcern = useMemo(
+    () => (initialConcern ? initialConcern.trim() : ""),
+    [initialConcern],
+  );
+  const isEmpty = trimmedConcern?.length === 0;
   const isTooShort =
     trimmedConcern.length > 0 && trimmedConcern.length < MIN_CONCERN_LENGTH;
   const errorMessage =
@@ -36,17 +25,15 @@ const ConcernInput = ({
       : "";
 
   const handleSubmit = useCallback(
-    async (event: SubmitEvent) => {
+    (event: SubmitEvent) => {
       event.preventDefault();
       setHasSubmitted(true);
 
-      if (isEmpty || isTooShort || isSubmitting) {
+      if (isEmpty || isTooShort) {
         return;
       }
-
-      await onSubmit?.(trimmedConcern);
     },
-    [isEmpty, isSubmitting, isTooShort, onSubmit, trimmedConcern],
+    [isEmpty, isTooShort],
   );
 
   useEffect(() => {
@@ -105,7 +92,7 @@ const ConcernInput = ({
             minRows={7}
             multiline
             onBlur={() => setHasSubmitted(true)}
-            onChange={(event) => setConcern(event.target.value)}
+            onChange={(event) => setInitialConcern(event.target.value)}
             placeholder="例：明後日○○社の面接があるんだけど、何を準備すればいいかわからない"
             slotProps={{
               input: {
@@ -116,7 +103,7 @@ const ConcernInput = ({
                 },
               },
             }}
-            value={concern}
+            value={initialConcern}
           />
 
           <Stack
@@ -125,8 +112,7 @@ const ConcernInput = ({
             sx={{ alignItems: { xs: "stretch", sm: "center" } }}
           >
             <Button
-              disabled={isEmpty || isSubmitting}
-              loading={isSubmitting}
+              disabled={isEmpty}
               startIcon={<SendRoundedIcon />}
               sx={{
                 minHeight: 48,

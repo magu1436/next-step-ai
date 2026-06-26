@@ -1,12 +1,15 @@
+"use client";
+
 import HourglassTopRoundedIcon from "@mui/icons-material/HourglassTopRounded";
 import { Box, Card, Stack, Typography } from "@mui/material";
 
-type ProcessingOutputCardProps = {
-  label?: string;
-  summary?: string;
-};
+import { useProcessingOutput } from "../hooks/context";
 
-const ProcessingOutputCard = ({ label, summary }: ProcessingOutputCardProps) => {
+const ProcessingOutputCard = () => {
+  const {
+    processingOutput: { label, summary },
+  } = useProcessingOutput();
+
   if (!label && !summary) {
     return null;
   }
