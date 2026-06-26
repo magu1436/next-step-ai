@@ -18,7 +18,7 @@ export type AgentStepStatus =
 
 export interface ClassificationResult {
   category: ConcernCategory;
-  subCategory?: string;
+  subCategory: string | null;
   confidence: number;
   reason: string;
 }
@@ -115,7 +115,7 @@ export interface FollowUpQuestion {
 export interface JobHuntAdviceState {
   initialConcern: string;
   category?: ConcernCategory;
-  subCategory?: string;
+  subCategory?: string | null;
   classificationReason?: string;
   confidence?: number;
 

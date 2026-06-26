@@ -29,6 +29,9 @@ const CLASSIFY_CONCERN_SYSTEM_PROMPT = `
 - 判断が難しい場合でも、必ず1つに分類する
 - confidenceは0から1で返す
 - reasonは日本語で簡潔に書く
+
+subCategory は必ず返してください。
+細かい分類が不要または判断できない場合は null を返してください。
 `.trim();
 
 const createFallbackClassification = (
@@ -36,7 +39,7 @@ const createFallbackClassification = (
 ): ClassificationResult => {
   return {
     category: "other",
-    subCategory: undefined,
+    subCategory: null,
     confidence: 0.2,
     reason: `分類処理に失敗したため、汎用カテゴリとして扱います。相談内容: ${initialConcern.slice(
       0,

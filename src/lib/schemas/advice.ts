@@ -15,7 +15,7 @@ export const concernCategorySchema = z.enum([
 
 export const classificationResultSchema = z.object({
   category: concernCategorySchema,
-  subCategory: z.string().optional(),
+  subCategory: z.string().nullable(),
   confidence: z.number().min(0).max(1),
   reason: z.string(),
 }) satisfies z.ZodType<ClassificationResult>;
