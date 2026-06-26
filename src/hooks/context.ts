@@ -39,11 +39,11 @@ export const useClassificationResult = () => {
   };
 };
 
-export const useErrorEessage = () => {
+export const useErrorMessage = () => {
   const context = assertContextActive(useContext(NextStepAIContext));
   return {
-    errorEessage: context.errorEessage,
-    setErrorEessage: context.setErrorEessage,
+    errorMessage: context.errorMessage,
+    setErrorMessage: context.setErrorMessage,
   };
 };
 

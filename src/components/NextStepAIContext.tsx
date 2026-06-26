@@ -18,8 +18,8 @@ export interface NextStepAIContextValues {
   setSteps: StateSetter<AgentProgressStep[]>;
   classificationResult?: ClassificationResult;
   setClassificationResult: StateSetter<ClassificationResult | undefined>;
-  errorEessage: string | null;
-  setErrorEessage: StateSetter<string | null>;
+  errorMessage: string | null;
+  setErrorMessage: StateSetter<string | null>;
   processingOutput: {
     label?: string;
     summary?: string;
@@ -55,7 +55,7 @@ export const NextStepAIContextProvider = ({
   const [classificationResult, setClassificationResult] = useState<
     ClassificationResult | undefined
   >(undefined);
-  const [errorEessage, setErrorEessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [processingOutput, setProcessingOutput] = useState<{
     label?: string;
     summary?: string;
@@ -75,8 +75,8 @@ export const NextStepAIContextProvider = ({
     setSteps,
     classificationResult,
     setClassificationResult,
-    errorEessage,
-    setErrorEessage,
+    errorMessage,
+    setErrorMessage,
     processingOutput,
     setProcessingOutput,
     questions,
@@ -87,9 +87,5 @@ export const NextStepAIContextProvider = ({
     setAppPhase,
   };
 
-  return (
-    <NextStepAIContext value={contextValue}>
-      {children}
-    </NextStepAIContext>
-  );
+  return <NextStepAIContext value={contextValue}>{children}</NextStepAIContext>;
 };
