@@ -93,7 +93,7 @@ export interface Action {
   title: string;
   reason: string;
   priority: "high" | "medium" | "low";
-  estimatedMinutes?: number;
+  estimatedMinutes: number | null;
 }
 
 export interface MissingInfo {
