@@ -3,6 +3,7 @@
 import { createContext, useState } from "react";
 import {
   AgentProgressStep,
+  AppPhase,
   ClassificationResult,
   FollowUpQuestion,
   JobHuntAdviceState,
@@ -34,6 +35,8 @@ export interface NextStepAIContextValues {
     | Pick<JobHuntAdviceState, "refinedContext" | "strategy" | "actions">
     | undefined
   >;
+  appPhase: AppPhase;
+  setAppPhase: StateSetter<AppPhase>;
 }
 
 export const NextStepAIContext = createContext<NextStepAIContextValues | null>(
@@ -48,7 +51,11 @@ export const NextStepAIContextProvider = ({
   const [initialConcern, setInitialConcern] = useState<string | undefined>(
     undefined,
   );
-  const [steps, setSteps] = useState<AgentProgressStep[]>([]);
+  const [steps, setSteps] = useState<AgentProgressStep[]>([{
+    id: "classify_concern",
+    label: "分類",
+    status: "running",
+  }]);
   const [classificationResult, setClassificationResult] = useState<
     ClassificationResult | undefined
   >(undefined);
@@ -64,6 +71,7 @@ export const NextStepAIContextProvider = ({
     | Pick<JobHuntAdviceState, "refinedContext" | "strategy" | "actions">
     | undefined
   >(undefined);
+  const [appPhase, setAppPhase] = useState<AppPhase>("idle");
   const contextValue: NextStepAIContextValues = {
     initialConcern,
     setInitialConcern,
@@ -79,11 +87,13 @@ export const NextStepAIContextProvider = ({
     setQuestions,
     result,
     setResult,
+    appPhase,
+    setAppPhase,
   };
 
   return (
-    <NextStepAIContext.Provider value={contextValue}>
+    <NextStepAIContext value={contextValue}>
       {children}
-    </NextStepAIContext.Provider>
+    </NextStepAIContext>
   );
 };

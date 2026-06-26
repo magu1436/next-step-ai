@@ -3,13 +3,14 @@
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
 import { Box, Button, Card, Stack, TextField, Typography } from "@mui/material";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useInitialConcern } from "../hooks/context";
+import { useAgentProperties, useInitialConcern } from "../hooks/context";
 
 const MIN_CONCERN_LENGTH = 10;
 
 const ConcernInput = () => {
   const formRef = useRef<HTMLFormElement>(null);
   const { initialConcern, setInitialConcern } = useInitialConcern();
+  const { setAppPhase } = useAgentProperties();
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const trimmedConcern = useMemo(
@@ -32,8 +33,10 @@ const ConcernInput = () => {
       if (isEmpty || isTooShort) {
         return;
       }
+      
+      setAppPhase("running_initial_analysis");
     },
-    [isEmpty, isTooShort],
+    [isEmpty, isTooShort, setAppPhase],
   );
 
   useEffect(() => {

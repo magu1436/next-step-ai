@@ -21,11 +21,13 @@ export const useInitialConcern = () => {
   };
 };
 
-export const useSteps = () => {
+export const useAgentProperties = () => {
   const context = assertContextActive(useContext(NextStepAIContext));
   return {
     steps: context.steps,
     setSteps: context.setSteps,
+    appPhase: context.appPhase,
+    setAppPhase: context.setAppPhase,
   };
 };
 

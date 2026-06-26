@@ -8,7 +8,7 @@ import RadioButtonUncheckedRoundedIcon from "@mui/icons-material/RadioButtonUnch
 import RemoveCircleOutlineRoundedIcon from "@mui/icons-material/RemoveCircleOutlineRounded";
 import { Box, Card, Chip, Stack, Typography } from "@mui/material";
 
-import { useSteps } from "../hooks/context";
+import { useAgentProperties } from "../hooks/context";
 import type { AgentStepStatus } from "../types/agent";
 
 type StatusView = {
@@ -51,7 +51,7 @@ const statusViewMap: Record<AgentStepStatus, StatusView> = {
 };
 
 const AgentProgressTimeline = () => {
-  const { steps } = useSteps();
+  const { steps } = useAgentProperties();
 
   return (
     <Card
