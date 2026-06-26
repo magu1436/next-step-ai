@@ -45,6 +45,16 @@ export const useAdviceStream = () => {
         }));
         break;
 
+      case "step_skipped":
+        setSteps((steps) =>
+          updateStepStatus(steps, event.stepId, "skipped", event.summary),
+        );
+        setProcessingOutput((output) => ({
+          label: output.label,
+          summary: event.summary,
+        }));
+        break;
+
       case "needs_user_input":
         setAppPhase("waiting_for_user");
         setQuestions(event.questions);

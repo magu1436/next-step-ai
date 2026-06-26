@@ -22,6 +22,11 @@ export type AgentStreamEvent =
       data?: unknown;
     }
   | {
+      type: "step_skipped";
+      stepId: AgentProgressStep["id"];
+      summary?: string;
+    }
+  | {
       type: "needs_user_input";
       questions: FollowUpQuestion[];
       state: JobHuntAdviceState;

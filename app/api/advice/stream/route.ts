@@ -71,7 +71,7 @@ export async function POST(request: Request): Promise<Response> {
             type: "step_started",
             stepId: "analyze_missing_info",
             label: "不足情報を整理",
-          })
+          });
 
           const missingInfoResult = await analyzeMissingInfo({
             initialConcern,
@@ -88,7 +88,7 @@ export async function POST(request: Request): Promise<Response> {
             type: "step_completed",
             stepId: "analyze_missing_info",
             summary: "不足情報を整理しました。",
-          })
+          });
 
           const questions = missingInfoResult.missingInfo
             .filter((info) => info.handling === "ask_user")
@@ -124,6 +124,22 @@ export async function POST(request: Request): Promise<Response> {
             controller.close();
             return;
           }
+
+          send({
+            type: "step_skipped",
+            stepId: "generate_follow_up_questions",
+            summary: "追加質問は不要と判断しました。",
+          });
+          send({
+            type: "step_skipped",
+            stepId: "wait_user_input",
+            summary: "追加回答なしで提案生成へ進みます。",
+          });
+          send({
+            type: "step_skipped",
+            stepId: "merge_additional_info",
+            summary: "追加情報なしで提案生成へ進みます。",
+          })
         } else {
           const { state: originalState, additionalInfo } =
             body as AdviceStreamFollowUpRequest;
@@ -140,33 +156,33 @@ export async function POST(request: Request): Promise<Response> {
             stepId: "merge_additional_info",
             summary: "追加情報を統合しました。",
           });
-
-          send({
-            type: "step_started",
-            stepId: "refine_context",
-            label: "状況を再整理",
-          });
-
-          const refinedContext = await refineContext({ state });
-
-          state = {
-            ...state,
-            refinedContext,
-          };
-
-          send({
-            type: "step_completed",
-            stepId: "refine_context",
-            summary: "状況を再整理しました。",
-            data: refinedContext,
-          });
-
-          send({
-            type: "partial_result",
-            field: "refinedContext",
-            data: refinedContext,
-          });
         }
+
+        send({
+          type: "step_started",
+          stepId: "refine_context",
+          label: "状況を再整理",
+        });
+
+        const refinedContext = await refineContext({ state });
+
+        state = {
+          ...state,
+          refinedContext,
+        };
+
+        send({
+          type: "step_completed",
+          stepId: "refine_context",
+          summary: "状況を再整理しました。",
+          data: refinedContext,
+        });
+
+        send({
+          type: "partial_result",
+          field: "refinedContext",
+          data: refinedContext,
+        });
 
         send({
           type: "step_started",
