@@ -14,7 +14,7 @@ export async function POST(request: Request): Promise<Response> {
 
       for (const event of mockInitialEvents) {
         send(event);
-        await sleep(300);
+        await sleep(1000);
       }
 
       controller.close();

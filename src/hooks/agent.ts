@@ -12,6 +12,7 @@ export const useAdviceStream = () => {
     setQuestions,
     setSteps,
     setResult,
+    setProcessingOutput,
     setErrorMessage,
   } = useNextStepAIContext();
 
@@ -21,6 +22,9 @@ export const useAdviceStream = () => {
         setSteps((steps) =>
           updateStepStatus(steps, event.stepId, "running"),
         );
+        setProcessingOutput({
+          label: event.label,
+        });
         break;
 
       case "step_completed":
@@ -35,12 +39,20 @@ export const useAdviceStream = () => {
         if (event.stepId === "classify_concern") {
           setClassificationResult(event.data as ClassificationResult);
         }
+        setProcessingOutput((output) => ({
+          label: output.label,
+          summary: event.summary,
+        }));
         break;
 
       case "needs_user_input":
         setAppPhase("waiting_for_user");
         setQuestions(event.questions);
         setCurrentState(event.state);
+        setProcessingOutput({
+          label: "追加質問が必要です",
+          summary: event.questions.map((question) => question.question).join("\n"),
+        });
 
         setSteps((steps) =>
           updateStepStatus(steps, "wait_user_input", "paused"),
@@ -52,16 +64,28 @@ export const useAdviceStream = () => {
           ...result,
           [event.field]: event.data,
         }));
+        setProcessingOutput({
+          label: partialResultLabelMap[event.field],
+          summary: formatPartialResult(event.data),
+        });
         break;
 
       case "completed":
         setAppPhase("completed");
         setCurrentState(event.state);
+        setProcessingOutput({
+          label: "提案が完了しました",
+          summary: "整理した状況、解決方針、実行アクションを生成しました。",
+        });
         break;
 
       case "error":
         setAppPhase("error");
         setErrorMessage(event.message);
+        setProcessingOutput({
+          label: "エラーが発生しました",
+          summary: event.message,
+        });
         break;
     }
   };
@@ -70,6 +94,7 @@ export const useAdviceStream = () => {
     setInitialConcern(initialConcern);
     setAppPhase("running_initial_analysis");
     setErrorMessage(null);
+    setProcessingOutput({});
 
     const response = await fetch("/api/advice/stream", {
       method: "POST",
@@ -90,6 +115,7 @@ export const useAdviceStream = () => {
     }
 
     setAppPhase("running_final_generation");
+    setProcessingOutput({});
 
     setSteps((steps) =>
       updateStepStatus(steps, "wait_user_input", "completed"),
@@ -113,6 +139,51 @@ export const useAdviceStream = () => {
     submitInitialConcern,
     submitFollowUpAnswer,
   };
+};
+
+const partialResultLabelMap = {
+  refinedContext: "状況を再整理しました",
+  strategy: "解決方針を生成しました",
+  actions: "実行アクションを生成しました",
+} satisfies Record<
+  Extract<AgentStreamEvent, { type: "partial_result" }>["field"],
+  string
+>;
+
+const formatPartialResult = (data: unknown): string => {
+  if (typeof data === "string") {
+    return data;
+  }
+
+  if (Array.isArray(data)) {
+    return data
+      .map((item, index) => {
+        if (isActionLike(item)) {
+          return `${index + 1}. ${item.title}\n${item.reason}`;
+        }
+        return `${index + 1}. ${JSON.stringify(item)}`;
+      })
+      .join("\n\n");
+  }
+
+  if (data && typeof data === "object") {
+    return JSON.stringify(data, null, 2);
+  }
+
+  return "";
+};
+
+const isActionLike = (
+  value: unknown,
+): value is { title: string; reason: string } => {
+  return (
+    !!value &&
+    typeof value === "object" &&
+    "title" in value &&
+    "reason" in value &&
+    typeof value.title === "string" &&
+    typeof value.reason === "string"
+  );
 };
 
 const updateStepStatus = (
