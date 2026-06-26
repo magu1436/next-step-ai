@@ -75,3 +75,18 @@ export const useNextStepAIContext = () => {
   const context = assertContextActive(useContext(NextStepAIContext));
   return context;
 };
+
+export const useResetContext = () => {
+  const context = assertContextActive(useContext(NextStepAIContext));
+  return () => {
+    context.setInitialConcern(undefined);
+    context.setSteps([]);
+    context.setAppPhase("idle");
+    context.setClassificationResult(undefined);
+    context.setCurrentState(undefined);
+    context.setErrorMessage(null);
+    context.setProcessingOutput({});
+    context.setQuestions(undefined);
+    context.setResult(undefined);
+  }
+}

@@ -50,27 +50,22 @@ export const NextStepAIContextProvider = ({
 }: {
   children?: React.ReactNode[] | React.ReactNode;
 }) => {
-  const [initialConcern, setInitialConcern] = useState<string | undefined>(
-    undefined,
-  );
+  const [initialConcern, setInitialConcern] = useState<string>();
   const [steps, setSteps] = useState<AgentProgressStep[]>([]);
-  const [classificationResult, setClassificationResult] = useState<
-    ClassificationResult | undefined
-  >(undefined);
+  const [classificationResult, setClassificationResult] =
+    useState<ClassificationResult>();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [processingOutput, setProcessingOutput] = useState<{
     label?: string;
     summary?: string;
   }>({});
-  const [questions, setQuestions] = useState<FollowUpQuestion[] | undefined>(
-    undefined,
-  );
-  const [result, setResult] = useState<
-    | Pick<JobHuntAdviceState, "refinedContext" | "strategy" | "actions">
-    | undefined
-  >(undefined);
+  const [questions, setQuestions] = useState<FollowUpQuestion[]>();
+  const [result, setResult] =
+    useState<
+      Pick<JobHuntAdviceState, "refinedContext" | "strategy" | "actions">
+    >();
   const [appPhase, setAppPhase] = useState<AppPhase>("idle");
-  const [currentState, setCurrentState] = useState<JobHuntAdviceState>()
+  const [currentState, setCurrentState] = useState<JobHuntAdviceState>();
   const contextValue: NextStepAIContextValues = {
     initialConcern,
     setInitialConcern,
@@ -89,7 +84,7 @@ export const NextStepAIContextProvider = ({
     appPhase,
     setAppPhase,
     currentState,
-    setCurrentState
+    setCurrentState,
   };
 
   return <NextStepAIContext value={contextValue}>{children}</NextStepAIContext>;
