@@ -23,21 +23,71 @@ export interface ClassificationResult {
   reason: string;
 }
 
+export type AgentProgressStepId =
+  | "receive_concern"
+  | "classify_concern"
+  | "analyze_missing_info"
+  | "generate_follow_up_questions"
+  | "wait_user_input"
+  | "merge_additional_info"
+  | "refine_context"
+  | "generate_strategy"
+  | "generate_actions";
+
 export interface AgentProgressStep {
-  id:
-    | "receive_concern"
-    | "classify_concern"
-    | "analyze_missing_info"
-    | "generate_follow_up_questions"
-    | "wait_user_input"
-    | "merge_additional_info"
-    | "refine_context"
-    | "generate_strategy"
-    | "generate_actions";
+  id: AgentProgressStepId;
   label: string;
   status: AgentStepStatus;
   summary?: string;
 }
+
+export const AGENT_PROGRESS_STEPS: readonly AgentProgressStep[] = [
+  {
+    id: "receive_concern",
+    label: "悩みを受け取る",
+    status: "waiting",
+  },
+  {
+    id: "classify_concern",
+    label: "悩みを分類",
+    status: "waiting",
+  },
+  {
+    id: "analyze_missing_info",
+    label: "不足情報を整理",
+    status: "waiting",
+  },
+  {
+    id: "generate_follow_up_questions",
+    label: "追加質問を生成",
+    status: "waiting",
+  },
+  {
+    id: "wait_user_input",
+    label: "ユーザー回答待ち",
+    status: "waiting",
+  },
+  {
+    id: "merge_additional_info",
+    label: "追加情報を統合",
+    status: "waiting",
+  },
+  {
+    id: "refine_context",
+    label: "状況を再整理",
+    status: "waiting",
+  },
+  {
+    id: "generate_strategy",
+    label: "解決方針を生成",
+    status: "waiting",
+  },
+  {
+    id: "generate_actions",
+    label: "実行アクションを生成",
+    status: "waiting",
+  },
+];
 
 export interface Action {
   title: string;

@@ -9,7 +9,11 @@ import RemoveCircleOutlineRoundedIcon from "@mui/icons-material/RemoveCircleOutl
 import { Box, Card, Chip, Stack, Typography } from "@mui/material";
 
 import { useAgentProperties } from "../hooks/context";
-import type { AgentStepStatus } from "../types/agent";
+import {
+  AGENT_PROGRESS_STEPS,
+  type AgentProgressStep,
+  type AgentStepStatus,
+} from "../types/agent";
 
 type StatusView = {
   label: string;
@@ -24,7 +28,7 @@ const statusViewMap: Record<AgentStepStatus, StatusView> = {
     icon: <RadioButtonUncheckedRoundedIcon fontSize="small" />,
   },
   running: {
-    label: "処理中",
+    label: "実行中",
     color: "primary",
     icon: <PlayCircleFilledWhiteRoundedIcon fontSize="small" />,
   },
@@ -34,7 +38,7 @@ const statusViewMap: Record<AgentStepStatus, StatusView> = {
     icon: <CheckCircleRoundedIcon fontSize="small" />,
   },
   paused: {
-    label: "回答待ち",
+    label: "一時停止中",
     color: "warning",
     icon: <PauseCircleFilledRoundedIcon fontSize="small" />,
   },
@@ -50,8 +54,25 @@ const statusViewMap: Record<AgentStepStatus, StatusView> = {
   },
 };
 
+const mergeProgressSteps = (
+  steps: AgentProgressStep[],
+): AgentProgressStep[] => {
+  const progressById = new Map(steps.map((step) => [step.id, step]));
+
+  return AGENT_PROGRESS_STEPS.map((baseStep) => {
+    const progress = progressById.get(baseStep.id);
+
+    return {
+      ...baseStep,
+      status: progress?.status ?? baseStep.status,
+      summary: progress?.summary,
+    };
+  });
+};
+
 const AgentProgressTimeline = () => {
   const { steps } = useAgentProperties();
+  const visibleSteps = mergeProgressSteps(steps);
 
   return (
     <Card
@@ -73,118 +94,112 @@ const AgentProgressTimeline = () => {
           エージェント実行状況
         </Typography>
 
-        {steps.length === 0 ? (
-          <Typography color="text.secondary" variant="body2">
-            処理ステップを準備しています。
-          </Typography>
-        ) : (
-          <Stack component="ol" sx={{ m: 0, p: 0 }}>
-            {steps.map((step, index) => {
-              const statusView = statusViewMap[step.status];
-              const isLast = index === steps.length - 1;
+        <Stack component="ol" sx={{ m: 0, p: 0 }}>
+          {visibleSteps.map((step, index) => {
+            const statusView = statusViewMap[step.status];
+            const isLast = index === visibleSteps.length - 1;
 
-              return (
+            return (
+              <Box
+                component="li"
+                key={step.id}
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "32px minmax(0, 1fr)",
+                  listStyle: "none",
+                  minHeight: isLast ? 32 : 64,
+                }}
+              >
                 <Box
-                  component="li"
-                  key={step.id}
                   sx={{
-                    display: "grid",
-                    gridTemplateColumns: "32px minmax(0, 1fr)",
-                    listStyle: "none",
-                    minHeight: isLast ? 32 : 64,
+                    alignItems: "center",
+                    color: `${statusView.color}.main`,
+                    display: "flex",
+                    flexDirection: "column",
                   }}
                 >
                   <Box
+                    aria-hidden="true"
                     sx={{
-                      alignItems: "center",
-                      color: `${statusView.color}.main`,
                       display: "flex",
-                      flexDirection: "column",
+                      height: 24,
+                      justifyContent: "center",
+                      width: 24,
                     }}
                   >
-                    <Box
-                      aria-hidden="true"
-                      sx={{
-                        display: "flex",
-                        height: 24,
-                        justifyContent: "center",
-                        width: 24,
-                      }}
-                    >
-                      {statusView.icon}
-                    </Box>
-                    {!isLast && (
-                      <Box
-                        sx={{
-                          bgcolor:
-                            step.status === "completed"
-                              ? "success.light"
-                              : "divider",
-                          flex: 1,
-                          mt: 0.5,
-                          width: 2,
-                        }}
-                      />
-                    )}
+                    {statusView.icon}
                   </Box>
-
-                  <Stack
-                    spacing={0.75}
-                    sx={{ minWidth: 0, pb: isLast ? 0 : 2 }}
-                  >
-                    <Stack
-                      direction="row"
-                      spacing={1}
+                  {!isLast && (
+                    <Box
                       sx={{
-                        alignItems: "center",
-                        flexWrap: "wrap",
-                        rowGap: 0.75,
+                        bgcolor:
+                          step.status === "completed"
+                            ? "success.light"
+                            : "divider",
+                        flex: 1,
+                        mt: 0.5,
+                        width: 2,
                       }}
-                    >
-                      <Typography
-                        color={
-                          step.status === "waiting"
-                            ? "text.secondary"
-                            : "text.primary"
-                        }
-                        sx={{
-                          fontWeight: step.status === "running" ? 700 : 600,
-                          overflowWrap: "anywhere",
-                        }}
-                        variant="body1"
-                      >
-                        {step.label}
-                      </Typography>
-                      <Chip
-                        color={statusView.color}
-                        label={statusView.label}
-                        size="small"
-                        variant={
-                          step.status === "waiting" || step.status === "skipped"
-                            ? "outlined"
-                            : "filled"
-                        }
-                      />
-                    </Stack>
-
-                    {step.summary && (
-                      <Typography
-                        color="text.secondary"
-                        sx={{
-                          overflowWrap: "anywhere",
-                          whiteSpace: "pre-wrap",
-                        }}
-                        variant="body2"
-                      >
-                        {step.summary}
-                      </Typography>
-                    )}
-                  </Stack>
+                    />
+                  )}
                 </Box>
-              );
-            })}
-          </Stack>
-        )}
+
+                <Stack
+                  spacing={0.75}
+                  sx={{ minWidth: 0, pb: isLast ? 0 : 2 }}
+                >
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    sx={{
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                      rowGap: 0.75,
+                    }}
+                  >
+                    <Typography
+                      color={
+                        step.status === "waiting"
+                          ? "text.secondary"
+                          : "text.primary"
+                      }
+                      sx={{
+                        fontWeight: step.status === "running" ? 700 : 600,
+                        overflowWrap: "anywhere",
+                      }}
+                      variant="body1"
+                    >
+                      {step.label}
+                    </Typography>
+                    <Chip
+                      color={statusView.color}
+                      label={statusView.label}
+                      size="small"
+                      variant={
+                        step.status === "waiting" || step.status === "skipped"
+                          ? "outlined"
+                          : "filled"
+                      }
+                    />
+                  </Stack>
+
+                  {step.summary && (
+                    <Typography
+                      color="text.secondary"
+                      sx={{
+                        overflowWrap: "anywhere",
+                        whiteSpace: "pre-wrap",
+                      }}
+                      variant="body2"
+                    >
+                      {step.summary}
+                    </Typography>
+                  )}
+                </Stack>
+              </Box>
+            );
+          })}
+        </Stack>
       </Stack>
     </Card>
   );

@@ -51,11 +51,7 @@ export const NextStepAIContextProvider = ({
   const [initialConcern, setInitialConcern] = useState<string | undefined>(
     undefined,
   );
-  const [steps, setSteps] = useState<AgentProgressStep[]>([{
-    id: "classify_concern",
-    label: "分類",
-    status: "running",
-  }]);
+  const [steps, setSteps] = useState<AgentProgressStep[]>([]);
   const [classificationResult, setClassificationResult] = useState<
     ClassificationResult | undefined
   >(undefined);
