@@ -67,6 +67,12 @@ export async function POST(request: Request): Promise<Response> {
             data: classification,
           });
 
+          send({
+            type: "step_started",
+            stepId: "analyze_missing_info",
+            label: "不足情報を整理",
+          })
+
           const missingInfoResult = await analyzeMissingInfo({
             initialConcern,
             category: classification.category,
@@ -77,6 +83,12 @@ export async function POST(request: Request): Promise<Response> {
             extractedInfo: missingInfoResult.extractedInfo,
             missingInfo: missingInfoResult.missingInfo,
           };
+
+          send({
+            type: "step_completed",
+            stepId: "analyze_missing_info",
+            summary: "不足情報を整理しました。",
+          })
 
           const questions = missingInfoResult.missingInfo
             .filter((info) => info.handling === "ask_user")
