@@ -1,10 +1,13 @@
-import { analyzeMissingInfo } from "@/src/lib/nodes/analyzeMissingInfo";
-import { classifyConcern } from "@/src/lib/nodes/classfyConcern";
-import { generateActions } from "@/src/lib/nodes/generateActions";
-import { generateStrategy } from "@/src/lib/nodes/generateStrategy";
-import { mergeAdditionalInfo } from "@/src/lib/nodes/mergeAdditionalInfo";
-import { refineContext } from "@/src/lib/nodes/refineContext";
-import type { JobHuntAdviceState } from "@/src/types/agent";
+import {
+  followUpAdviceGraph,
+  initialAdviceGraph,
+} from "@/src/lib/agent/graph";
+import {
+  AGENT_PROGRESS_STEPS,
+  type AgentProgressStepId,
+  type FollowUpQuestion,
+  type JobHuntAdviceState,
+} from "@/src/types/agent";
 import type { AgentStreamEvent } from "@/src/types/stream";
 
 interface AdviceStreamInitialConcernRequest {
@@ -15,6 +18,109 @@ interface AdviceStreamFollowUpRequest {
   state: JobHuntAdviceState;
   additionalInfo?: string;
 }
+
+const stepLabelById = Object.fromEntries(
+  AGENT_PROGRESS_STEPS.map((step) => [step.id, step.label]),
+) as Record<AgentProgressStepId, string>;
+
+const createCompletedEvent = (
+  stepId: AgentProgressStepId,
+  update: Partial<JobHuntAdviceState>,
+): AgentStreamEvent => {
+  switch (stepId) {
+    case "receive_concern":
+      return {
+        type: "step_completed",
+        stepId,
+        summary: "相談内容を受け取りました。",
+      };
+    case "classify_concern":
+      return {
+        type: "step_completed",
+        stepId,
+        summary: `${update.category} に分類しました。`,
+        data: {
+          category: update.category,
+          subCategory: update.subCategory,
+          reason: update.classificationReason,
+          confidence: update.confidence,
+        },
+      };
+    case "analyze_missing_info":
+      return {
+        type: "step_completed",
+        stepId,
+        summary: "不足情報を整理しました。",
+      };
+    case "generate_follow_up_questions":
+      return {
+        type: "step_completed",
+        stepId,
+        summary: `${update.followUpQuestions?.length ?? 0}件の追加質問を生成しました`,
+        data: update.followUpQuestions,
+      };
+    case "merge_additional_info":
+      return {
+        type: "step_completed",
+        stepId,
+        summary: "追加情報を統合しました。",
+      };
+    case "refine_context":
+      return {
+        type: "step_completed",
+        stepId,
+        summary: "状況を再整理しました。",
+        data: update.refinedContext,
+      };
+    case "generate_strategy":
+      return {
+        type: "step_completed",
+        stepId,
+        summary: "解決方針を生成しました。",
+        data: update.strategy,
+      };
+    case "generate_actions":
+      return {
+        type: "step_completed",
+        stepId,
+        summary: "実行アクションを生成しました。",
+        data: update.actions,
+      };
+    case "wait_user_input":
+      return {
+        type: "step_completed",
+        stepId,
+      };
+  }
+};
+
+const createPartialResultEvent = (
+  stepId: AgentProgressStepId,
+  update: Partial<JobHuntAdviceState>,
+): AgentStreamEvent | null => {
+  switch (stepId) {
+    case "refine_context":
+      return {
+        type: "partial_result",
+        field: "refinedContext",
+        data: update.refinedContext,
+      };
+    case "generate_strategy":
+      return {
+        type: "partial_result",
+        field: "strategy",
+        data: update.strategy,
+      };
+    case "generate_actions":
+      return {
+        type: "partial_result",
+        field: "actions",
+        data: update.actions,
+      };
+    default:
+      return null;
+  }
+};
 
 export async function POST(request: Request): Promise<Response> {
   const body = await request.json();
@@ -28,217 +134,74 @@ export async function POST(request: Request): Promise<Response> {
       };
 
       try {
-        let state = {} as JobHuntAdviceState;
-
-        if ("initialConcern" in body) {
-          const { initialConcern } = body as AdviceStreamInitialConcernRequest;
-          send({
-            type: "step_started",
-            stepId: "receive_concern",
-            label: "悩みを受信",
-          });
-
-          send({
-            type: "step_completed",
-            stepId: "receive_concern",
-            summary: "相談内容を受け取りました。",
-          });
-
-          send({
-            type: "step_started",
-            stepId: "classify_concern",
-            label: "悩みを分類",
-          });
-
-          const classification = await classifyConcern({ initialConcern });
-
-          state = {
-            initialConcern,
-            category: classification.category,
-            subCategory: classification.subCategory,
-            classificationReason: classification.reason,
-            confidence: classification.confidence,
-          };
-
-          send({
-            type: "step_completed",
-            stepId: "classify_concern",
-            summary: `${classification.category} に分類しました。`,
-            data: classification,
-          });
-
-          send({
-            type: "step_started",
-            stepId: "analyze_missing_info",
-            label: "不足情報を整理",
-          });
-
-          const missingInfoResult = await analyzeMissingInfo({
-            initialConcern,
-            category: classification.category,
-          });
-
-          state = {
-            ...state,
-            extractedInfo: missingInfoResult.extractedInfo,
-            missingInfo: missingInfoResult.missingInfo,
-          };
-
-          send({
-            type: "step_completed",
-            stepId: "analyze_missing_info",
-            summary: "不足情報を整理しました。",
-          });
-
-          const questions = missingInfoResult.missingInfo
-            .filter((info) => info.handling === "ask_user")
-            .slice(0, 3)
-            .map((info) => ({
-              fieldKey: info.key,
-              question: info.question,
-              reason: `${info.label}が分かると、より具体的な提案ができます。`,
-              importance: info.importance,
-            }));
-
-          if (questions.length > 0) {
+        const callbacks = {
+          onNodeStart: (stepId: AgentProgressStepId) => {
             send({
               type: "step_started",
-              stepId: "generate_follow_up_questions",
-              label: "追加質問を生成しています",
+              stepId,
+              label: stepLabelById[stepId],
             });
+          },
+          onNodeComplete: (
+            stepId: AgentProgressStepId,
+            update: Partial<JobHuntAdviceState>,
+          ) => {
+            send(createCompletedEvent(stepId, update));
+
+            const partialResultEvent = createPartialResultEvent(stepId, update);
+            if (partialResultEvent != null) {
+              send(partialResultEvent);
+            }
+          },
+          onNodeSkipped: (stepId: AgentProgressStepId, summary?: string) => {
             send({
-              type: "step_completed",
-              stepId: "generate_follow_up_questions",
-              summary: `${questions.length}件の追加質問を生成しました`,
-              data: questions,
+              type: "step_skipped",
+              stepId,
+              summary,
             });
-            send({
-              type: "needs_user_input",
-              questions,
-              state: {
-                ...state,
-                followUpQuestions: questions,
-              },
-            });
+          },
+        };
 
-            controller.close();
-            return;
-          }
+        const graphConfig = {
+          configurable: {
+            callbacks,
+          },
+        };
 
+        const finalState = (
+          "initialConcern" in body
+            ? await initialAdviceGraph.invoke(
+                {
+                  initialConcern: (body as AdviceStreamInitialConcernRequest)
+                    .initialConcern,
+                },
+                graphConfig,
+              )
+            : await followUpAdviceGraph.invoke(
+                {
+                  ...(body as AdviceStreamFollowUpRequest).state,
+                  additionalInfo: (body as AdviceStreamFollowUpRequest)
+                    .additionalInfo,
+                },
+                graphConfig,
+              )
+        ) as JobHuntAdviceState;
+
+        const questions = finalState.followUpQuestions ?? [];
+        if (questions.length > 0 && finalState.actions == null) {
           send({
-            type: "step_skipped",
-            stepId: "generate_follow_up_questions",
-            summary: "追加質問は不要と判断しました。",
-          });
-          send({
-            type: "step_skipped",
-            stepId: "wait_user_input",
-            summary: "追加回答なしで提案生成へ進みます。",
-          });
-          send({
-            type: "step_skipped",
-            stepId: "merge_additional_info",
-            summary: "追加情報なしで提案生成へ進みます。",
-          })
-        } else {
-          const { state: originalState, additionalInfo } =
-            body as AdviceStreamFollowUpRequest;
-          send({
-            type: "step_started",
-            stepId: "merge_additional_info",
-            label: "追加情報を統合",
+            type: "needs_user_input",
+            questions: questions as FollowUpQuestion[],
+            state: finalState,
           });
 
-          state = mergeAdditionalInfo({ state: originalState, additionalInfo });
-
-          send({
-            type: "step_completed",
-            stepId: "merge_additional_info",
-            summary: "追加情報を統合しました。",
-          });
+          controller.close();
+          return;
         }
 
         send({
-          type: "step_started",
-          stepId: "refine_context",
-          label: "状況を再整理",
-        });
-
-        const refinedContext = await refineContext({ state });
-
-        state = {
-          ...state,
-          refinedContext,
-        };
-
-        send({
-          type: "step_completed",
-          stepId: "refine_context",
-          summary: "状況を再整理しました。",
-          data: refinedContext,
-        });
-
-        send({
-          type: "partial_result",
-          field: "refinedContext",
-          data: refinedContext,
-        });
-
-        send({
-          type: "step_started",
-          stepId: "generate_strategy",
-          label: "解決方針を生成",
-        });
-
-        const strategy = await generateStrategy({ state });
-
-        state = {
-          ...state,
-          strategy,
-        };
-
-        send({
-          type: "step_completed",
-          stepId: "generate_strategy",
-          summary: "解決方針を生成しました。",
-          data: strategy,
-        });
-
-        send({
-          type: "partial_result",
-          field: "strategy",
-          data: strategy,
-        });
-
-        send({
-          type: "step_started",
-          stepId: "generate_actions",
-          label: "実行アクションを生成",
-        });
-
-        const actions = await generateActions({ state });
-
-        state = {
-          ...state,
-          actions,
-        };
-
-        send({
-          type: "step_completed",
-          stepId: "generate_actions",
-          summary: "実行アクションを生成しました。",
-          data: actions,
-        });
-
-        send({
-          type: "partial_result",
-          field: "actions",
-          data: actions,
-        });
-
-        send({
           type: "completed",
-          state,
+          state: finalState,
         });
 
         controller.close();
