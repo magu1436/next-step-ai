@@ -9,6 +9,7 @@ import { useAgentProperties } from "../hooks/context";
 import FollowUpQuestionPanel from "./FollowUpQuestionPanel";
 import ErrorPanel from "./ErrorPanel";
 import ConcernInput from "./ConcernInput";
+import ResultPanel from "./ResultPanel";
 
 const Analizing = () => {
   return (
@@ -24,7 +25,7 @@ const WaitingForUser = () => {
 };
 
 const Completed = () => {
-  return <ProcessingOutputCard />;
+  return <ResultPanel />;
 };
 
 const HappeningError = () => {

@@ -37,6 +37,8 @@ export interface NextStepAIContextValues {
   >;
   appPhase: AppPhase;
   setAppPhase: StateSetter<AppPhase>;
+  currentState?: JobHuntAdviceState;
+  setCurrentState: StateSetter<JobHuntAdviceState | undefined>;
 }
 
 export const NextStepAIContext = createContext<NextStepAIContextValues | null>(
@@ -68,6 +70,7 @@ export const NextStepAIContextProvider = ({
     | undefined
   >(undefined);
   const [appPhase, setAppPhase] = useState<AppPhase>("idle");
+  const [currentState, setCurrentState] = useState<JobHuntAdviceState>()
   const contextValue: NextStepAIContextValues = {
     initialConcern,
     setInitialConcern,
@@ -85,6 +88,8 @@ export const NextStepAIContextProvider = ({
     setResult,
     appPhase,
     setAppPhase,
+    currentState,
+    setCurrentState
   };
 
   return <NextStepAIContext value={contextValue}>{children}</NextStepAIContext>;

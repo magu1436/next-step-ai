@@ -6,31 +6,25 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useQuestions } from "../hooks/context";
 import QuestionCard from "./QuestionCard";
+import { useAdviceStream } from "../hooks/agent";
 
-type FollowUpQuestionPanelProps = {
-  onSubmit?: (additionalInfo: string) => void | Promise<void>;
-  isSubmitting?: boolean;
-};
-
-export default function FollowUpQuestionPanel({
-  onSubmit,
-  isSubmitting = false,
-}: FollowUpQuestionPanelProps) {
+export default function FollowUpQuestionPanel() {
   const { questions = [] } = useQuestions();
   const formRef = useRef<HTMLFormElement>(null);
   const [additionalInfo, setAdditionalInfo] = useState("");
+  const [ isSubmitting, setIsSubmitting ] = useState(false);
+  const { submitFollowUpAnswer } = useAdviceStream();
 
   const handleSubmit = useCallback(
     async (event: SubmitEvent) => {
       event.preventDefault();
+      setIsSubmitting(true);
 
-      if (isSubmitting) {
-        return;
-      }
+      await submitFollowUpAnswer(additionalInfo);
 
-      await onSubmit?.(additionalInfo.trim());
+      setIsSubmitting(false);
     },
-    [additionalInfo, isSubmitting, onSubmit],
+    [additionalInfo, submitFollowUpAnswer, setIsSubmitting],
   );
 
   useEffect(() => {

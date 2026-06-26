@@ -4,6 +4,7 @@ import SendRoundedIcon from "@mui/icons-material/SendRounded";
 import { Box, Button, Card, Stack, TextField, Typography } from "@mui/material";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAgentProperties, useInitialConcern } from "../hooks/context";
+import { useAdviceStream } from "../hooks/agent";
 
 const MIN_CONCERN_LENGTH = 10;
 
@@ -12,6 +13,7 @@ const ConcernInput = () => {
   const { initialConcern, setInitialConcern } = useInitialConcern();
   const { setAppPhase } = useAgentProperties();
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const { submitInitialConcern } = useAdviceStream();
 
   const trimmedConcern = useMemo(
     () => (initialConcern ? initialConcern.trim() : ""),
@@ -26,7 +28,7 @@ const ConcernInput = () => {
       : "";
 
   const handleSubmit = useCallback(
-    (event: SubmitEvent) => {
+    async (event: SubmitEvent) => {
       event.preventDefault();
       setHasSubmitted(true);
 
@@ -34,9 +36,11 @@ const ConcernInput = () => {
         return;
       }
       
-      setAppPhase("running_initial_analysis");
+      await submitInitialConcern(trimmedConcern);
+
+      setHasSubmitted(false);
     },
-    [isEmpty, isTooShort, setAppPhase],
+    [isEmpty, isTooShort, setAppPhase, submitInitialConcern, trimmedConcern],
   );
 
   useEffect(() => {
